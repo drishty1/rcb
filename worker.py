@@ -5,6 +5,7 @@ Railway worker — runs forever, checks every 60 seconds.
 import json, os, urllib.request, time
 from datetime import datetime
 from playwright.sync_api import sync_playwright
+from playwright_stealth import stealth_sync
 
 TELEGRAM_TOKEN = os.environ["TELEGRAM_TOKEN"]
 TELEGRAM_CHAT_ID = os.environ["TELEGRAM_CHAT_ID"]
@@ -15,14 +16,19 @@ INTERVAL = 60
 
 def fetch_matches():
     with sync_playwright() as p:
-        browser = p.chromium.launch(headless=True)
-        page = browser.new_page()
+        browser = p.chromium.launch(headless=True, args=["--no-sandbox"])
+        context = browser.new_context(
+            user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36",
+            viewport={"width": 1280, "height": 720}
+        )
+        page = context.new_page()
+        stealth_sync(page)
         page.goto(URL, timeout=60000, wait_until="domcontentloaded")
         page.wait_for_timeout(15000)
         text = page.inner_text("body")
         browser.close()
 
-    log(f"Page text snippet: {text[:300]}")  # debug
+    log(f"Page text snippet: {text[:300]}")
 
     matches = set()
     lines = [l.strip() for l in text.splitlines() if l.strip()]
