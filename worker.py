@@ -5,7 +5,6 @@ Railway worker — runs forever, checks every 60 seconds.
 import json, os, urllib.request, time
 from datetime import datetime
 from playwright.sync_api import sync_playwright
-from playwright_stealth import stealth_sync
 
 TELEGRAM_TOKEN = os.environ["TELEGRAM_TOKEN"]
 TELEGRAM_CHAT_ID = os.environ["TELEGRAM_CHAT_ID"]
@@ -22,7 +21,7 @@ def fetch_matches():
             viewport={"width": 1280, "height": 720}
         )
         page = context.new_page()
-        stealth_sync(page)
+        page.add_init_script("Object.defineProperty(navigator, 'webdriver', {get: () => undefined})")
         page.goto(URL, timeout=60000, wait_until="domcontentloaded")
         page.wait_for_timeout(15000)
         text = page.inner_text("body")
