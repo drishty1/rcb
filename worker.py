@@ -27,8 +27,6 @@ def fetch_matches():
         text = page.inner_text("body")
         browser.close()
 
-    log(f"Page text snippet: {text[:300]}")
-
     matches = set()
     lines = [l.strip() for l in text.splitlines() if l.strip()]
     for i, line in enumerate(lines):
