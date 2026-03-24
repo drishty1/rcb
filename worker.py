@@ -18,9 +18,11 @@ def fetch_matches():
         browser = p.chromium.launch(headless=True)
         page = browser.new_page()
         page.goto(URL, timeout=60000, wait_until="domcontentloaded")
-        page.wait_for_timeout(10000)
+        page.wait_for_timeout(15000)
         text = page.inner_text("body")
         browser.close()
+
+    log(f"Page text snippet: {text[:300]}")  # debug
 
     matches = set()
     lines = [l.strip() for l in text.splitlines() if l.strip()]
