@@ -13,8 +13,8 @@ def fetch_matches():
     with sync_playwright() as p:
         browser = p.chromium.launch(headless=True)
         page = browser.new_page()
-        page.goto(URL, timeout=30000)
-        page.wait_for_timeout(8000)
+        page.goto(URL, timeout=60000, wait_until="domcontentloaded")
+        page.wait_for_timeout(10000)
         text = page.inner_text("body")
         browser.close()
 
@@ -31,7 +31,9 @@ def fetch_matches():
 def load_state():
     if os.path.exists(STATE_FILE):
         with open(STATE_FILE) as f:
-            return set(json.load(f))
+            data = json.load(f)
+            if data:  # only return if non-empty
+                return set(data)
     return None
 
 
@@ -70,7 +72,7 @@ def main():
         log(f"Baseline: {len(known)} match(es)")
         for m in known:
             log(f"  • {m}")
-        return  # state.json will be committed by the workflow
+        return
 
     log(f"Known: {len(known)} match(es). Checking...")
     current = fetch_matches()
