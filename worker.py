@@ -15,7 +15,12 @@ INTERVAL = 60
 
 def fetch_matches():
     with sync_playwright() as p:
-        browser = p.chromium.launch(headless=True, args=["--no-sandbox"])
+        browser = p.chromium.launch(headless=True, args=[
+            "--no-sandbox",
+            "--disable-dev-shm-usage",
+            "--disable-gpu",
+            "--single-process",
+        ])
         context = browser.new_context(
             user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36",
             viewport={"width": 1280, "height": 720}
@@ -24,7 +29,7 @@ def fetch_matches():
         page.add_init_script("Object.defineProperty(navigator, 'webdriver', {get: () => undefined})")
         page.goto(URL, timeout=60000, wait_until="domcontentloaded")
         page.wait_for_timeout(15000)
-        text = page.inner_text("body")
+        text = page.evaluate("document.body.innerText")
         browser.close()
 
     matches = set()
