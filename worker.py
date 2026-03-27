@@ -102,11 +102,14 @@ def main():
             current = fetch_matches()
             new = current - known
             if new:
-                for match in new:
-                    log(f"NEW MATCH: {match}")
-                    send_telegram(match)
                 known = current
                 save_state(known)
+                for match in new:
+                    log(f"NEW MATCH: {match}")
+                    try:
+                        send_telegram(match)
+                    except Exception as te:
+                        log(f"Telegram error: {te}")
             else:
                 log(f"No new matches ({len(current)} total)")
         except Exception as e:
