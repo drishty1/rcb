@@ -14,32 +14,40 @@ INTERVAL = 60
 
 
 def fetch_matches():
-    with sync_playwright() as p:
-        browser = p.chromium.launch(headless=True, args=[
-            "--no-sandbox",
-            "--disable-dev-shm-usage",
-            "--disable-gpu",
-            "--single-process",
-        ])
-        context = browser.new_context(
-            user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36",
-            viewport={"width": 1280, "height": 720}
-        )
-        page = context.new_page()
-        page.add_init_script("Object.defineProperty(navigator, 'webdriver', {get: () => undefined})")
-        page.goto(URL, timeout=60000, wait_until="domcontentloaded")
-        page.wait_for_timeout(15000)
-        text = page.evaluate("document.body.innerText")
-        browser.close()
+    for attempt in range(3):
+        try:
+            with sync_playwright() as p:
+                browser = p.chromium.launch(headless=True, args=[
+                    "--no-sandbox",
+                    "--disable-dev-shm-usage",
+                    "--disable-gpu",
+                ])
+                try:
+                    context = browser.new_context(
+                        user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36",
+                        viewport={"width": 1280, "height": 720}
+                    )
+                    page = context.new_page()
+                    page.add_init_script("Object.defineProperty(navigator, 'webdriver', {get: () => undefined})")
+                    page.goto(URL, timeout=60000, wait_until="domcontentloaded")
+                    page.wait_for_timeout(15000)
+                    text = page.evaluate("document.body.innerText")
+                finally:
+                    browser.close()
 
-    matches = set()
-    lines = [l.strip() for l in text.splitlines() if l.strip()]
-    for i, line in enumerate(lines):
-        if line == "VS" and i > 0 and i < len(lines) - 1:
-            start = max(0, i - 3)
-            end = min(len(lines), i + 5)
-            matches.add(" | ".join(lines[start:end]))
-    return matches
+            matches = set()
+            lines = [l.strip() for l in text.splitlines() if l.strip()]
+            for i, line in enumerate(lines):
+                if line == "VS" and i > 0 and i < len(lines) - 1:
+                    start = max(0, i - 3)
+                    end = min(len(lines), i + 5)
+                    matches.add(" | ".join(lines[start:end]))
+            return matches
+        except Exception as e:
+            log(f"fetch attempt {attempt + 1} failed: {e}")
+            if attempt < 2:
+                time.sleep(10)
+    raise RuntimeError("fetch_matches failed after 3 attempts")
 
 
 def load_state():
