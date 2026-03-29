@@ -82,11 +82,14 @@ def main():
         for match in new:
             log(f"NEW MATCH: {match}")
             send_telegram(match)
-        known = current
-        save_state(known)
+        save_state(current)
         log("State updated.")
+    elif current != known:
+        removed = known - current
+        log(f"Match(es) removed from site (likely over): {len(removed)}. Updating state.")
+        save_state(current)
     else:
-        log(f"No new matches. ({len(current)} total)")
+        log(f"No new matches ({len(current)} total)")
 
 
 if __name__ == "__main__":
